@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+
+# Import the necessary libraries
+import time
+import math
+from ev3dev2.motor import *
+from ev3dev2.sound import Sound
+from ev3dev2.button import Button
+from ev3dev2.sensor import *
+from ev3dev2.sensor.lego import *
+from ev3dev2.sensor.virtual import *
+
+# Create the sensors and motors objects
+motorA = LargeMotor(OUTPUT_A)
+motorB = LargeMotor(OUTPUT_B)
+left_motor = motorA
+right_motor = motorB
+tank_drive = MoveTank(OUTPUT_A, OUTPUT_B)
+steering_drive = MoveSteering(OUTPUT_A, OUTPUT_B)
+
+spkr = Sound()
+btn = Button()
+radio = Radio()
+
+color_sensor_in1 = ColorSensor(INPUT_1)
+ultrasonic_sensor_in2 = UltrasonicSensor(INPUT_2)
+gyro_sensor_in3 = GyroSensor(INPUT_3)
+gps_sensor_in4 = GPSSensor(INPUT_4)
+pen_in5 = Pen(INPUT_5)
+
+motorC = LargeMotor(OUTPUT_C) # Magnet
+
+# Here is where your code starts
+
+SP = None
+gyro = None
+PV = None
+eroor = None
+
+# Describe this function...
+def gyroturn(SP, times):
+    global  gyro, PV, eroor, speedR, speedL
+    for count in range(times):
+        PV = gyro_sensor_in3.angle
+        eroor = SP - PV
+        if eroor > 100:
+            eroor = 100
+        if eroor < -100:
+            eroor = -100
+        speedL = eroor
+        speedR = -eroor
+        tank_drive.on(speedL,speedR)
+    print('gyroturn_finished')
+    print('angle =',PV)
+    
+def steer(ang, times):
+    global PV, eroor, speedR, speedL 
+    defspeed = 50
+    for count in range(times):
+        PV = gyro_sensor_in3.angle
+        eroor = ang - PV
+        if eroor > 100:
+            eroor = 100
+        if eroor < -100:
+            eroor = -100
+        speedL = defspeed +eroor
+        speedR = defspeed -eroor
+        
+        tank_drive.on(speedL,speedR)
+    print('gyroturn_finished')
+    print('angle =',PV)        
+        
+
+
+# Describe this function...
+def go_us(SP, times):
+    global PV, eroor
+    for count in range(times):
+        PV = ultrasonic_sensor_in2.distance_centimeters
+        eroor = PV - SP
+        if eroor > 100:
+            eroor = 100
+        if eroor < -100:
+            eroor = -100
+        tank_drive.on(eroor, eroor)
+    print('finished')
+    tank_drive.on(0,0)
+
+steer(0,10000)
+#go_us(40, 2000)
+#gyroturn(90, 500)
+
