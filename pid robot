@@ -32,6 +32,7 @@ motorC = LargeMotor(OUTPUT_C) # Magnet
 
 # Here is where your code starts
 
+
 SP = None
 gyro = None
 PV = None
@@ -52,11 +53,12 @@ def gyroturn(SP, times):
         tank_drive.on(speedL,speedR)
     print('gyroturn_finished')
     print('angle =',PV)
-    
-def steer(ang, times):
-    global PV, eroor, speedR, speedL 
+
+def steer(ang):
+    global PV, eroor, speedR, speedL
     defspeed = 50
-    for count in range(times):
+    while ultrasonic_sensor_in2.distance_centimeters > 90:
+        #for count in range(times):
         PV = gyro_sensor_in3.angle
         eroor = ang - PV
         if eroor > 100:
@@ -68,7 +70,7 @@ def steer(ang, times):
         
         tank_drive.on(speedL,speedR)
     print('gyroturn_finished')
-    print('angle =',PV)        
+    print('angle =',PV)
         
 
 
@@ -86,7 +88,9 @@ def go_us(SP, times):
     print('finished')
     tank_drive.on(0,0)
 
-steer(0,10000)
-#go_us(40, 2000)
-#gyroturn(90, 500)
-
+    
+for count in range(10):
+    steer(0)
+    #tank_drive.on(0, 0)
+    go_us(30, 1000)
+    gyroturn(90, 500)
