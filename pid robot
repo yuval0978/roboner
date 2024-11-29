@@ -11,6 +11,28 @@ from ev3dev2.sensor.lego import *
 from ev3dev2.sensor.virtual import *
 
 # Create the sensors and motors objects
+
+spkr = Sound()
+btn = Button()
+radio = Radio()
+
+
+
+# Here is where your code starts
+
+#!/usr/bin/env python3
+
+# Import the necessary libraries
+import time
+import math
+from ev3dev2.motor import *
+from ev3dev2.sound import Sound
+from ev3dev2.button import Button
+from ev3dev2.sensor import *
+from ev3dev2.sensor.lego import *
+from ev3dev2.sensor.virtual import *
+
+# Create the sensors and motors objects
 motorA = LargeMotor(OUTPUT_A)
 motorB = LargeMotor(OUTPUT_B)
 left_motor = motorA
@@ -53,11 +75,13 @@ def gyroturn(SP, times):
         tank_drive.on(speedL,speedR)
     print('gyroturn_finished')
     print('angle =',PV)
+    gyro_sensor_in3.reset()
+    print('gyro has been reseted')
 
 def steer(ang):
     global PV, eroor, speedR, speedL
     defspeed = 50
-    while ultrasonic_sensor_in2.distance_centimeters > 90:
+    while ultrasonic_sensor_in2.distance_centimeters > 100:
         #for count in range(times):
         PV = gyro_sensor_in3.angle
         eroor = ang - PV
@@ -72,7 +96,6 @@ def steer(ang):
     print('gyroturn_finished')
     print('angle =',PV)
         
-
 
 # Describe this function...
 def go_us(SP, times):
@@ -94,3 +117,6 @@ for count in range(10):
     #tank_drive.on(0, 0)
     go_us(30, 1000)
     gyroturn(90, 500)
+    #reset_gyro()
+
+    
