@@ -67,7 +67,7 @@ def gyroturn(SP, times):
     global  gyro, PV, eroor, speedR, speedL
     for count in range(times):
         PV = gyro_sensor_in5.angle
-        eroor = SP - PV
+        eroor = PV - SP
         if eroor > 100:
             eroor = 100
         if eroor < -100:
@@ -142,27 +142,35 @@ def go_us_right(SP, times):
     print('finished')
     tank_drive.on(0,0)
 
-def check():
-    if ultrasonic_sensor_in2.distance_centimeters < 10
+def check(times):
+    print('function is starts')
+    if ultrasonic_sensor_in2.distance_centimeters < 20:
         tank_drive.off(brake=True)
     else:
-        go_us(30, 1000)
-    if ultrasonic_sensor_in3.distance_centimeters < 10
+        gyroturn(90, 500)
+        go_us(20, 1000)
+    print('front')
+    if ultrasonic_sensor_in3.distance_centimeters < 20:
         tank_drive.off(brake=True)
     else:
-        go_us_left(30, 1000)
-    if ultrasonic_sensor_in4.distance_centimeters < 10
+        gyroturn(90, 500)
+        go_us_left(20, 1000)
+    print('left')
+    if ultrasonic_sensor_in4.distance_centimeters < 20:
         tank_drive.off(brake=True)
     else:
-        go_us_right(30, 1000)
-for count in range(10):
-    check()
+        gyroturn(90, 500)
+        go_us_right(20, 1000)
+    print('right')
+print('function finished')
+for count in range(1):
+    check(1)
     #steer(0)
     #tank_drive.on(0, 0)
     #go_us(30, 1000)
     #go_us_left(30, 1000)
     #go_us_right(30, 1000)
-    gyroturn(90, 500)
+    #gyroturn(90, 500)
     #reset_gyro()
 
     
