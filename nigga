@@ -158,4 +158,27 @@ def check_dir():
 
 check_dir()
 
+
+#check_dir()
+
+def check_us():
+    global PV_front, PV_left, Pv_right
+    PV_front = ultrasonic_sensor_in2.distance_centimeters
+    PV_left = ultrasonic_sensor_in3.distance_centimeters
+    PV_right = ultrasonic_sensor_in4.distance_centimeters
+    if PV_front > PV_right and PV_front > PV_left:
+        print ("front won")
+        return("front")
+    elif PV_right > PV_left and PV_left > PV_front:
+        print("right won")
+        return("right")
+    elif PV_left > Pv_right and PV_front > PV_front:
+        print("left won")
+        return("left")
+check_us()        
+
+
+#def turn():    
+    if check_us() == PV_front:
+        
     
