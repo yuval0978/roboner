@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+
+# Import the necessary libraries
+import time
+import math
+from ev3dev2.motor import *
+from ev3dev2.sound import Sound
+from ev3dev2.button import Button
+from ev3dev2.sensor import *
+from ev3dev2.sensor.lego import *
+from ev3dev2.sensor.virtual import *
+
+# Create the sensors and motors objects
+
+spkr = Sound()
+btn = Button()
+radio = Radio()
+
+
+
+# Here is where your code starts
+
+#!/usr/bin/env python3
+
+# Import the necessary libraries
+import time
+import math
+from ev3dev2.motor import *
+from ev3dev2.sound import Sound
+from ev3dev2.button import Button
+from ev3dev2.sensor import *
+from ev3dev2.sensor.lego import *
+from ev3dev2.sensor.virtual import *
+
+# Create the sensors and motors objects
+motorA = LargeMotor(OUTPUT_A)
+motorB = LargeMotor(OUTPUT_B)
+left_motor = motorA
+right_motor = motorB
+tank_drive = MoveTank(OUTPUT_A, OUTPUT_B)
+steering_drive = MoveSteering(OUTPUT_A, OUTPUT_B)
+
+spkr = Sound()
+btn = Button()
+radio = Radio()
+
+color_sensor_in1 = ColorSensor(INPUT_1)
+ultrasonic_sensor_in2 = UltrasonicSensor(INPUT_2)
+ultrasonic_sensor_in3 = UltrasonicSensor(INPUT_3)
+ultrasonic_sensor_in4 = UltrasonicSensor(INPUT_4)
+gyro_sensor_in5 = GyroSensor(INPUT_5)
+#gps_sensor_in4 = GPSSensor(INPUT_4)
+#pen_in5 = Pen(INPUT_5)
+
+motorC = LargeMotor(OUTPUT_C) # Magnet
+
+# Here is where my code starts
+
+
+SP = None
+gyro = None
+PV = None
+eroor = None
+
+def gyroturn(SP, times):
+    global  gyro, PV, eroor, speedR, speedL
+    for count in range(times):
+        PV = gyro_sensor_in5.angle
+        eroor = SP - PV
+        if eroor > 100:
+            eroor = 100
+        if eroor < -100:
+            eroor = -100
+        speedL = eroor
+        speedR = -eroor
+        tank_drive.on(speedL,speedR)
+    print('gyroturn_finished')
+    print('angle =',PV)
+    gyro_sensor_in5.reset()
+    print('gyro has been reseted')
+
+def steer(ang):
+    global PV, eroor, speedR, speedL
+    defspeed = 50
+    while ultrasonic_sensor_in2.distance_centimeters > 40:
+        PV = gyro_sensor_in5.angle
+        eroor = ang - PV
+        if eroor > 100:
+            eroor = 100
+        if eroor < -100:
+            eroor = -100
+        speedL = defspeed +eroor
+        speedR = defspeed -eroor
+        
+        tank_drive.on(speedL,speedR)
+    print('gyroturn_finished')
+    print('angle =',PV)
+        
+
+def go_us(SP, times):
+    global PV, eroor
+    for count in range(times):
+        PV = ultrasonic_sensor_in2.distance_centimeters * 1.5
+        eroor = PV - SP
+        if eroor > 100:
+            eroor = 100
+        if eroor < -100:
+            eroor = -100
+        sum = eroor*-1
+        if ultrasonic_sensor_in2.distance_centimeters<ultrasonic_sensor_in3.distance_centimeters and ultrasonic_sensor_in3.distance_centimeters>ultrasonic_sensor_in4.distance_centimeters:
+            tank_drive.on(eroor, eroor)
+        elif ultrasonic_sensor_in4.distance_centimeters>ultrasonic_sensor_in3.distance_centimeters and ultrasonic_sensor_in4.distance_centimeters>ultrasonic_sensor_in2.distance_centimeters:
+            tank_drive.on(sum,eroor)
+        elif ultrasonic_sensor_in4.distance_centimeters<ultrasonic_sensor_in2.distance_centimeters and ultrasonic_sensor_in2.distance_centimeters>ultrasonic_sensor_in3.distance_centimeters:
+            tank_drive.on(eroor, eroor)
+    print('finished')
+    tank_drive.on(0,0)
+    
+
+def gyroturn_left(SP, times):
+    global  gyro, PV, eroor, speedR, speedL
+    for count in range(times):
+        PV = gyro_sensor_in5.angle
+        eroor = SP - PV
+        if eroor > 100:
+            eroor = 100
+        if eroor < -100:
+            eroor = -100
+        speedL = eroor
+        speedR = -eroor
+        tank_drive.on(speedL,speedR)
+    print('gyroturn_finished')
+    print('angle =',PV)
+    gyro_sensor_in5.reset()
+    print('gyro has been reseted')    
+
+
+def check_dir():
+    while True:
+        if ultrasonic_sensor_in2.distance_centimeters < 20:
+            tank_drive.off(brake=True)
+        else:
+            print('front')
+            steer(0)
+            go_us(20, 700) 
+        if ultrasonic_sensor_in3.distance_centimeters < 20:
+            tank_drive.off(brake=True)
+        else:
+            print('left')
+            gyroturn_left(-90, 500)
+            steer(0)
+            go_us(20, 700)
+        if ultrasonic_sensor_in4.distance_centimeters < 20:
+            tank_drive.off(brake=True)
+        else:
+            print('right')
+            gyroturn(90, 500)
+            steer(0)
+            go_us(20, 700)
+        if ultrasonic_sensor_in2.distance_centimeters < 20 and ultrasonic_sensor_in3.distance_centimeters < 20 and ultrasonic_sensor_in4.distance_centimeters < 20:
+            gyroturn(90, 500)    
+        print('function finished')
+
+
+#check_dir()
+
+
+#check_dir()
+
+def check_us():
+    global PV_front, PV_left, Pv_right
+    PV_front = ultrasonic_sensor_in2.distance_centimeters
+    PV_left = ultrasonic_sensor_in3.distance_centimeters
+    PV_right = ultrasonic_sensor_in4.distance_centimeters
+    if PV_front > PV_right and PV_front > PV_left:
+        print ("front won")
+        return("front")
+    elif PV_right > PV_left and PV_left > PV_front:
+        print("right won")
+        return("right")
+    elif PV_left > Pv_right and PV_front > PV_front:
+        print("left won")
+        return("left")
+
+
+def turn():    
+    if check_us == ("left"):
+        gyroturn_left(90, 500)
+    if check_us == ("right"):
+        gyroturn(90, 500)
+    if check_us == ("front"):
+        print("nigga")
+
+turn()
