@@ -157,10 +157,6 @@ def check_dir():
             gyroturn(90, 500)    
         print('function finished')
 
-#def color_1():
-    
-
-
 def check_us():
     global PV_front, PV_left, Pv_right
     PV_front = ultrasonic_sensor_in2.distance_centimeters
@@ -168,9 +164,9 @@ def check_us():
     PV_right = ultrasonic_sensor_in4.distance_centimeters
     if PV_front > PV_right and PV_front > PV_left:
         #print ("front won")
-        #return("front")
+        return("front")
         steer(0)
-    elif PV_right > PV_left and PV_left > PV_front:
+    elif PV_right > PV_left and PV_right > PV_front:
         #print("right won")
         return("right")
         #gyroturn(90, 500)
@@ -180,15 +176,45 @@ def check_us():
         return("left")
         #gyroturn_left(-90, 500)
         #steer(0)
-while True:
-    check_us()
 def move():
     while True:
         if check_us() == "front":
             steer(0)
-        else:
-            # Exit or stop driving if condition is not met
-            tank_drive.off(brake=True)
-            break  # Exit the loop if not facing an obstacle
+        elif check_us() == "right":
+            gyroturn(90, 500)
+            steer(0)
+        elif check_us() == "left":
+            gyroturn_left(-90, 500)
+            steer(0)
+#move()
 
-move()
+
+def move_1():
+    while True:
+        direction = check_us()  # Get the direction from the sensor
+        if direction == "front":
+            steer(0)  # Continue straight
+            print("Moving forward")
+        elif direction == "right":
+            print("Turning right")  # Debug message
+            gyroturn(90, 500)  # Turn 90 degrees to the right
+            move_forward_after_turn()  # Move forward after turning
+        elif direction == "left":
+            print("Turning left")  # Debug message
+            gyroturn_left(-90, 500)  # Turn 90 degrees to the left
+            move_forward_after_turn()  # Move forward after turning
+        else:
+            print("No valid direction; stopping.")  # Debug message
+            tank_drive.off(brake=True)  # Stop the robot
+            break  # Exit the loop if no valid direction is detected
+
+def move_forward_after_turn():
+    """
+    Moves the robot forward after making a turn to avoid getting stuck near obstacles or walls.
+    """
+    steer(0)  # Reset steering to go straight
+    print("Moving forward after turn")  # Debug message
+    tank_drive.on(50, 50)  # Move forward with moderate speed (adjust as needed)
+    time.sleep(1)  # Move forward for 2 seconds (adjust this based on maze dimensions)
+    tank_drive.off(brake=True)  # Stop the robot after moving forward
+move_1()
