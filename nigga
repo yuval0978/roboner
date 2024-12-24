@@ -61,7 +61,7 @@ SP = None
 gyro = None
 PV = None
 eroor = None
-
+Kp = 1.5
 def gyroturn(SP, times):
     global  gyro, PV, eroor, speedR, speedL
     for count in range(times):
@@ -82,31 +82,33 @@ def gyroturn(SP, times):
 def steer(ang):
     global PV, eroor, speedR, speedL
     defspeed = 50
-    while ultrasonic_sensor_in2.distance_centimeters > 40:
+    if ultrasonic_sensor_in2.distance_centimeters > 10:
         PV = gyro_sensor_in5.angle
         eroor = ang - PV
+        out = Kp * eroor 
         if eroor > 100:
             eroor = 100
         if eroor < -100:
             eroor = -100
-        speedL = defspeed +eroor
-        speedR = defspeed -eroor
-        
+        speedL = defspeed +out
+        speedR = defspeed -out
         tank_drive.on(speedL,speedR)
-    print('gyroturn_finished')
-    print('angle =',PV)
-        
+    else:
+        # Stop motors if too close to an object
+        tank_drive.off(brake=True)
+    print('angle =', PV)
 
 def go_us(SP, times):
     global PV, eroor
     for count in range(times):
-        PV = ultrasonic_sensor_in2.distance_centimeters * 1.5
+        PV = ultrasonic_sensor_in2.distance_centimeters 
         eroor = PV - SP
+        out = Kp*eroor
         if eroor > 100:
             eroor = 100
         if eroor < -100:
             eroor = -100
-        tank_drive.on(eroor, eroor)
+        tank_drive.on(out, out)
     print('finished')
     tank_drive.on(0,0)
     
@@ -155,11 +157,9 @@ def check_dir():
             gyroturn(90, 500)    
         print('function finished')
 
+#def color_1():
+    
 
-check_dir()
-
-
-#check_dir()
 
 def check_us():
     global PV_front, PV_left, Pv_right
@@ -167,18 +167,28 @@ def check_us():
     PV_left = ultrasonic_sensor_in3.distance_centimeters
     PV_right = ultrasonic_sensor_in4.distance_centimeters
     if PV_front > PV_right and PV_front > PV_left:
-        print ("front won")
-        return("front")
+        #print ("front won")
+        #return("front")
+        steer(0)
     elif PV_right > PV_left and PV_left > PV_front:
-        print("right won")
+        #print("right won")
         return("right")
-    elif PV_left > Pv_right and PV_front > PV_front:
-        print("left won")
+        #gyroturn(90, 500)
+        #steer(0)
+    elif PV_left > PV_right and PV_left > PV_front:
+        #print("left won")
         return("left")
-check_us()        
+        #gyroturn_left(-90, 500)
+        #steer(0)
+while True:
+    check_us()
+def move():
+    while True:
+        if check_us() == "front":
+            steer(0)
+        else:
+            # Exit or stop driving if condition is not met
+            tank_drive.off(brake=True)
+            break  # Exit the loop if not facing an obstacle
 
-
-#def turn():    
-    if check_us() == PV_front:
-        
-    
+move()
