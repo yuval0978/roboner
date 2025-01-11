@@ -61,7 +61,7 @@ SP = None
 gyro = None
 PV = None
 eroor = None
-Kp = 1.5
+Kp = 2
 def gyroturn(SP, times):
     global  gyro, PV, eroor, speedR, speedL
     for count in range(times):
@@ -82,22 +82,20 @@ def gyroturn(SP, times):
 def steer(ang):
     global PV, eroor, speedR, speedL
     defspeed = 50
-    while ultrasonic_sensor_in2.distance_centimeters > 20:
+    while ultrasonic_sensor_in2.distance_centimeters > 40:
         PV = gyro_sensor_in5.angle
         eroor = ang - PV
-        out = Kp * eroor 
         if eroor > 100:
             eroor = 100
         if eroor < -100:
             eroor = -100
-        speedL = defspeed +out
-        speedR = defspeed -out
+        speedL = defspeed +eroor
+        speedR = defspeed -eroor
+        
         tank_drive.on(speedL,speedR)
-    else:
-        # Stop motors if too close to an object
-        tank_drive.off(brake=True)
-    print('angle =', PV)
-
+    print('gyroturn_finished')
+    print('angle =',PV)
+        
 def go_us(SP, times):
     global PV, eroor
     for count in range(times):
@@ -138,21 +136,21 @@ def check_dir():
         else:
             print('front')
             steer(0)
-            go_us(20, 700) 
+            go_us(10, 700) 
         if ultrasonic_sensor_in3.distance_centimeters < 20:
             tank_drive.off(brake=True)
         else:
             print('left')
             gyroturn_left(-90, 500)
             steer(0)
-            go_us(20, 700)
+            go_us(10, 700)
         if ultrasonic_sensor_in4.distance_centimeters < 20:
             tank_drive.off(brake=True)
         else:
             print('right')
             gyroturn(90, 500)
             steer(0)
-            go_us(20, 700)
+            go_us(10, 700)
         if ultrasonic_sensor_in2.distance_centimeters < 20 and ultrasonic_sensor_in3.distance_centimeters < 20 and ultrasonic_sensor_in4.distance_centimeters < 20:
             gyroturn(90, 500)    
         print('function finished')
