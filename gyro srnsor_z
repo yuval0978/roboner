@@ -1,0 +1,58 @@
+#include <Wire.h>
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+
+Adafruit_MPU6050 mpu;
+
+// Variables to hold the integrated angles for X, Y, and Z axes
+float angleX = 0, angleY = 0, angleZ = 0;
+// Variable to store the previous time for integration
+unsigned long lastTime = 0;
+
+void setup() {
+  // Start the Serial Monitor at 115200 baud
+  Serial.begin(115200);
+  while (!Serial);
+
+  // Initialize the MPU6050 sensor
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+    while (1);
+  }
+  Serial.println("MPU6050 Found!");
+
+  // Configure the sensor ranges and filter settings
+  mpu.setGyroRange(MPU6050_RANGE_250_DEG);         // Gyro range set to ±250°/s
+  mpu.setAccelerometerRange(MPU6050_RANGE_2_G);      // Accelerometer range set to ±2G
+  mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);         // Set the filter bandwidth
+
+  // Initialize time tracking
+  lastTime = millis();
+  delay(100);
+}
+
+void loop() {
+  // Create sensor event objects for accelerometer, gyroscope, and temperature
+  sensors_event_t a, g, temp;
+  mpu.getEvent(&a, &g, &temp);
+
+  // Calculate time elapsed (dt) in seconds since last loop
+  unsigned long currentTime = millis();
+  float dt = (currentTime - lastTime) / 1000.0;
+  lastTime = currentTime;
+  int pi_x = (g.gyro.x * (180/3.14));
+  int pi_y = (g.gyro.y * (180/3.14));
+  int pi_z = (g.gyro.z * (180/3.14));
+
+  // Integrate the gyroscope values to calculate the angle in degrees
+  angleX += pi_x;
+  angleY += pi_y;
+  angleZ += pi_z;
+
+  // Print the calculated angles to the Serial Monitor
+  Serial.print("Angle (degrees) Z= : ");
+  Serial.print(angleZ);
+  Serial.print("\n");
+  delay(100); // Adjust delay as needed for your application
+
+}
