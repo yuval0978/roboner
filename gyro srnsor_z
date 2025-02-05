@@ -10,10 +10,11 @@ float angleX = 0, angleY = 0, angleZ = 0;
 unsigned long lastTime = 0;
 
 void setup() {
-  // Start the Serial Monitor at 115200 baud
-  Serial.begin(115200);
-  while (!Serial);
+    Wire.begin();
 
+  Serial.begin(9600);
+  while (!Serial); // Leonardo: wait for Serial Monitor
+  Serial.println("\nI2C Scanner");
   // Initialize the MPU6050 sensor
   if (!mpu.begin()) {
     Serial.println("Failed to find MPU6050 chip");
@@ -32,6 +33,9 @@ void setup() {
 }
 
 void loop() {
+  
+ 
+ 
   // Create sensor event objects for accelerometer, gyroscope, and temperature
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
@@ -40,13 +44,13 @@ void loop() {
   unsigned long currentTime = millis();
   float dt = (currentTime - lastTime) / 1000.0;
   lastTime = currentTime;
-  int pi_x = (g.gyro.x * (180/3.14));
-  int pi_y = (g.gyro.y * (180/3.14));
-  int pi_z = (g.gyro.z * (180/3.14));
+  //int pi_x = (g.gyro.x * dt * (180/3.14159265358979323846));
+  //int pi_y = (g.gyro.y * dt * (180/3.14159265358979323846));
+  int pi_z = (g.gyro.z * dt * (180/ PI));
 
   // Integrate the gyroscope values to calculate the angle in degrees
-  angleX += pi_x;
-  angleY += pi_y;
+  //angleX += pi_x;
+  //angleY += pi_y;
   angleZ += pi_z;
 
   // Print the calculated angles to the Serial Monitor
