@@ -4,59 +4,68 @@
 
 Adafruit_MPU6050 mpu;
 
-// Variables to hold the integrated angles for X, Y, and Z axes
-float angleX = 0, angleY = 0, angleZ = 0;
-// Variable to store the previous time for integration
+float angleZ = 0;
 unsigned long lastTime = 0;
 
-void setup() {
-    Wire.begin();
+// Gyroscope calibration offsets
+float gyroZoffset = 0;
 
-  Serial.begin(9600);
-  while (!Serial); // Leonardo: wait for Serial Monitor
-  Serial.println("\nI2C Scanner");
-  // Initialize the MPU6050 sensor
+void calibrateGyro() {
+  int numSamples = 500;
+  float sumZ = 0;
+
+  Serial.println("Calibrating gyro... DO NOT MOVE SENSOR");
+  delay(1000);
+
+  for (int i = 0; i < numSamples; i++) {
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
+    sumZ += g.gyro.z;
+    delay(10);
+  }
+
+  gyroZoffset = sumZ / numSamples;
+
+  Serial.println("Calibration complete!");
+}
+
+void setup() {
+  Wire.begin();
+  Serial.begin(115200); // Faster baud rate
+  while (!Serial);
+
   if (!mpu.begin()) {
     Serial.println("Failed to find MPU6050 chip");
     while (1);
   }
-  Serial.println("MPU6050 Found!");
 
-  // Configure the sensor ranges and filter settings
-  mpu.setGyroRange(MPU6050_RANGE_250_DEG);         // Gyro range set to ±250°/s
-  mpu.setAccelerometerRange(MPU6050_RANGE_2_G);      // Accelerometer range set to ±2G
-  mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);         // Set the filter bandwidth
+  mpu.setGyroRange(MPU6050_RANGE_250_DEG);
+  mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
+  mpu.setFilterBandwidth(MPU6050_BAND_5_HZ);
 
-  // Initialize time tracking
+  calibrateGyro(); // Perform calibration
   lastTime = millis();
-  delay(100);
 }
 
-void loop() {
-  
- 
- 
-  // Create sensor event objects for accelerometer, gyroscope, and temperature
+float gyro_value(){
   sensors_event_t a, g, temp;
   mpu.getEvent(&a, &g, &temp);
-
-  // Calculate time elapsed (dt) in seconds since last loop
   unsigned long currentTime = millis();
   float dt = (currentTime - lastTime) / 1000.0;
   lastTime = currentTime;
-  //int pi_x = (g.gyro.x * dt * (180/3.14159265358979323846));
-  //int pi_y = (g.gyro.y * dt * (180/3.14159265358979323846));
-  int pi_z = (g.gyro.z * dt * (180/ PI));
+  // Apply calibration offsets
+  float gyroZ = g.gyro.z - gyroZoffset;
+  // Apply a deadband to reduce drift when the sensor is stationary
+  if (fabs(gyroZ) < 0.02) {  // threshold; adjust based on your observations
+  gyroZ = 0;
+  }
+  angleZ += gyroZ * dt * (180.0 / PI);
+  return angleZ;
+}
 
-  // Integrate the gyroscope values to calculate the angle in degrees
-  //angleX += pi_x;
-  //angleY += pi_y;
-  angleZ += pi_z;
+void loop() {
 
-  // Print the calculated angles to the Serial Monitor
-  Serial.print("Angle (degrees) Z= : ");
-  Serial.print(angleZ);
-  Serial.print("\n");
-  delay(100); // Adjust delay as needed for your application
-
+  Serial.print("Z-Axis Angle: ");
+  Serial.println(gyro_value(), 1); // 1 decimal place
+  delay(10); // Reduced delay for faster sampling
 }
