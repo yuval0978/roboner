@@ -86,10 +86,10 @@ def steer(ang):
         PV = gyro_sensor_in5.angle
         eroor = ang - PV
         out = Kp * eroor 
-        if eroor > 100:
-            eroor = 100
-        if eroor < -100:
-            eroor = -100
+        if out > 100:
+            out = 100
+        if out < -100:
+            out = -100
         speedL = defspeed +out
         speedR = defspeed -out
         tank_drive.on(speedL,speedR)
