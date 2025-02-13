@@ -1,3 +1,28 @@
+#!/usr/bin/env python3
+
+# Import the necessary libraries
+import time
+import math
+from ev3dev2.motor import *
+from ev3dev2.sound import Sound
+from ev3dev2.button import Button
+from ev3dev2.sensor import *
+from ev3dev2.sensor.lego import *
+from ev3dev2.sensor.virtual import *
+
+# Create the sensors and motors objects
+
+spkr = Sound()
+btn = Button()
+radio = Radio()
+
+
+
+# Here is where your code starts
+
+#!/usr/bin/env python3
+
+# Import the necessary libraries
 import time
 import math
 from ev3dev2.motor import *
@@ -29,28 +54,49 @@ gyro_sensor_in5 = GyroSensor(INPUT_5)
 
 motorC = LargeMotor(OUTPUT_C) # Magnet
 
+# Here is where my code starts
+
 
 SP = None
 gyro = None
 PV = None
 eroor = None
-Kp = 1.5
-KI = 0.4
-Kd = 0.1
+Kp = 2
+Ki = 0.1
+Kd = 1.5 
+#Kp = 3
+#Ki = 0.4
+#Kd = 1.5
+
 def gyroturn(SP, times):
     global  gyro, PV, eroor, speedR, speedL
+    cum_error = 0 
+    last_error = 0
+    previous_time = time.time() 
     
     for count in range(times):
         PV = gyro_sensor_in5.angle
-        eroor = SP - PV
-        if eroor > 100:
-            eroor = 100
-        if eroor < -100:
-            eroor = -100
-        speedL = eroor
-        speedR = -eroor
+        error = SP - PV  # Calculate current error (renamed from 'eroor')
+        current_time = time.time()
+        elapsed_time = current_time - previous_time  # In seconds
+        
+        cum_error += error * elapsed_time
+        
+        # The rate change
+        if elapsed_time == 0:
+            derivative = 0  # Avoid division by zero
+        else:
+            rate_error = (error - last_error) / elapsed_time
+        
+        out = Kp * error + Ki * cum_error + Kd * rate_error  # Updated variable name
+        out = max(min(out, 100), -100)  # Clamp output between -100 and 100
+        
+        speedL = out
+        speedR = -out
+        
         tank_drive.on(speedL,speedR)
-    
+        previous_time = current_time
+        last_error = error  # Updated variable name
     print('gyroturn_finished')
     print('angle =',PV)
     gyro_sensor_in5.reset()
@@ -58,79 +104,66 @@ def gyroturn(SP, times):
 
 def steer(ang):
     global PV, eroor, speedR, speedL
-    
-    defspeed = 50
-    
-    
+    gyro_sensor_in5.reset()
+    defspeed = 69
+    cum_error = 0 
+    last_error = 0
+    previous_time = time.time() 
     while ultrasonic_sensor_in2.distance_centimeters > 20:
-        current_time = time.time() * 1_000_000  # Convert to microseconds
-
         PV = gyro_sensor_in5.angle
-        eroor = ang - PV
-        cum_error += error * current_time
-        out = Kp * eroor + KI * cum_error 
-        if eroor > 100:
-            eroor = 100
-        if eroor < -100:
-            eroor = -100
-        speedL = defspeed +out
-        speedR = defspeed -out
+        error = ang - PV  # Calculate current error (renamed from 'eroor')
+        current_time = time.time()
+        elapsed_time = current_time - previous_time  # In seconds
+        
+        cum_error += error * elapsed_time
+        
+        # The rate change
+        if elapsed_time == 0:
+            derivative = 0  # Avoid division by zero
+        else:
+            rate_error = (error - last_error) / elapsed_time
+        
+        out = Kp * error + Ki * cum_error + Kd * rate_error  # Updated variable name
+        out = max(min(out, 30), -30)  
+        
+        speedL = defspeed + out
+        speedR = defspeed - out
+
+        
         tank_drive.on(speedL,speedR)
+        
+        previous_time = current_time
+        last_error = error  # Updated variable name
     else:
         # Stop motors if too close to an object
         tank_drive.off(brake=True)
     print('angle =', PV)
 
-def go_us(SP, times):
-    global PV, eroor
-    cum_error = 0 
-    last_error = 0
-    previous_time = time.time() 
-    for count in range(times):
-        current_time = time.time()
-        elapsed_time = (current_time - previous_time) / 1000000.0
-        PV = ultrasonic_sensor_in2.distance_centimeters
-        eroor = PV - SP
-        cum_error += eroor * elapsed_time
-        rate_error = (eroor - last_error)/elapsed_time
-        out = Kp*eroor + KI * cum_error + Kd* rate_error
-        if out > 100:
-            out = 100
-        if out < -100:
-            out = -100
-        tank_drive.on(out, out)
-        previous_time = current_time
-        last_error = eroor
-    print('finished')
-    tank_drive.on(0,0)
-    
 
-def gyroturn_left(SP, times):
-    global  gyro, PV, eroor, speedR, speedL
+def go_us(SP, times):
+    global PV, error  # Changed from 'eroor' to 'error'
     cum_error = 0 
     last_error = 0
     previous_time = time.time() 
     for count in range(times):
-        current_time = time.time()
-        elapsed_time = (current_time - previous_time) / 1000000.0
         PV = ultrasonic_sensor_in2.distance_centimeters
-        eroor = PV - SP
-        cum_error += eroor * elapsed_time
-        rate_error = (eroor - last_error)/elapsed_time
-        out = Kp*eroor + KI * cum_error + Kd* rate_error
-        if eroor > 100:
-            eroor = 100
-        if eroor < -100:
-            eroor = -100
-        speedL = out
-        speedR = -out
-        tank_drive.on(speedL,speedR)
-        previous_time = current_time
-        last_error = eroor
-    print('gyroturn_finished')
-    print('angle =',PV)
-    gyro_sensor_in5.reset()
-    print('gyro has been reseted')    
+        error = PV - SP  # Calculate current error (renamed from 'eroor')
+        current_time = time.time()
+        elapsed_time = current_time - previous_time  # In seconds
+        
+        cum_error += error * elapsed_time
+        
+        # The rate change
+        if elapsed_time == 0:
+            derivative = 0  # Avoid division by zero
+        else:
+            rate_error = (error - last_error) / elapsed_time
+        
+        out = Kp * error + Ki * cum_error + Kd * rate_error  # Updated variable name
+        out = max(min(out, 100), -100)  # Clamp output between -100 and 100
+        tank_drive.on(out, out)
+    print('finished')
+    tank_drive.on(0, 0)
 
 
 def check_us():
@@ -154,12 +187,13 @@ def go_to_dir():
             pass
             steer(0)
         elif direction == "right":
-            gyroturn(90, 500)
+            gyroturn(90, 350)
             steer(0)
         elif direction == "left":
-            gyroturn_left(-90, 500)
+            gyroturn(-90, 350)
             steer(0)
 
+for count in range(100):
+    go_to_dir()
 
-for count in range(1):
-    gyroturn_left(-200, 2000)
+
